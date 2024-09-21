@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/recipes/")
 public class RecipeController {
 
     private final RecipeService recipeService;
@@ -20,34 +21,34 @@ public class RecipeController {
         this.recipeService = recipeService;
         this.userService = userService;
     }
-    @PostMapping("/api/recipe/user/{userId}")
-    public Recipe createRecipe(@RequestBody Recipe recipe, @PathVariable Long userId) throws Exception {
-        User user = userService.findUserById(userId);
+    @PostMapping()
+    public Recipe createRecipe(@RequestBody Recipe recipe, @RequestHeader("Authorization") String jwt) throws Exception {
+        User user = userService.findUserByJwt(jwt);
         Recipe newRecipe = recipeService.createRecipe(recipe,user);
         return newRecipe;
     }
 
-    @GetMapping("/api/recipe")
+    @GetMapping()
     public List<Recipe> getAllResponse() throws Exception{
         List<Recipe> recipes = recipeService.findAllRecipe();
         return recipes;
     }
 
-    @DeleteMapping("/api/recipe/{recipeId}")
+    @DeleteMapping("/{recipeId}")
     public String deleteRecipe(@PathVariable Long recipeId) throws Exception{
         recipeService.deleteRecipe(recipeId);
         return "recipe deleted successfully";
     }
 
-    @PutMapping("/api/recipe/{id}")
+    @PutMapping("/{id}")
     public Recipe updateRecipe(@RequestBody Recipe recipe, @PathVariable Long id) throws Exception{
         Recipe updatedRecipe=recipeService.updateRecipe(recipe,id);
         return updatedRecipe;
     }
 
-    @PutMapping("/api/recipe/{id}/user/{userId}")
-    public Recipe likeRecipe(@PathVariable Long userId, @PathVariable Long id) throws Exception{
-        User user = userService.findUserById(userId);
+    @PutMapping("/{id}/like")
+    public Recipe likeRecipe(@RequestHeader("Authorization") String jwt, @PathVariable Long id) throws Exception{
+        User user = userService.findUserByJwt(jwt);
         Recipe updatedRecipe = recipeService.likeRecipe(id,user);
         return updatedRecipe;
     }

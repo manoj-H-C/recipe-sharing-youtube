@@ -2,38 +2,23 @@ package com.recipe.controller;
 
 import com.recipe.model.User;
 import com.recipe.repository.UserRepository;
-import org.springframework.http.ResponseEntity;
+import com.recipe.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
+@RequiredArgsConstructor
 public class UserController {
-    private final UserRepository userRepository;
-
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    private final UserService userService;
+    @GetMapping("/api/users/profile")
+    public User findUserByJwt(@RequestHeader("Authorization") String jwt) throws Exception {
+        User user= userService.findUserByJwt(jwt);
+        return user;
     }
 
-    @PostMapping("/users")
-    public User createUser(@RequestBody User user) throws Exception {
-        User isExist = userRepository.findByEmail(user.getEmail());
-        if(isExist!=null){
-            throw new Exception("User already exists with email: "+user.getEmail());
-        }
-        User savedUser=userRepository.save(user);
-        return savedUser;
-    }
-    @DeleteMapping("/users/{userId}")
-    public String deleteUser(@PathVariable Long userId){
-        userRepository.deleteById(userId);
-        return "User Deleted successfully..!";
-    }
 
-    @GetMapping("/users/all-users")
-    public List<User> getAllUsers(){
-        List<User> users = userRepository.findAll();
-        return users;
-    }
+
+
+
 
 }

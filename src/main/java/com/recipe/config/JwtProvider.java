@@ -21,6 +21,7 @@ public class JwtProvider {
     @Value("${app-jwt-expiration-milliseconds}")
     private long jwtExpirationDate;
 
+
     //    generate jwt token
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
@@ -33,6 +34,7 @@ public class JwtProvider {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(expireDate)
+                .claim("email",authentication.getName())
                 .signWith(key())
                 .compact();
 
@@ -65,6 +67,14 @@ public class JwtProvider {
         return claims.getSubject(); // Extract the username
     }
 
+    public String  getEmailFromJwtToken(String jwt){
+        jwt=jwt.substring(7);
+        Claims claims=Jwts.parserBuilder().setSigningKey(key()).build()
+                .parseClaimsJws(jwt).getBody();
+
+        String email= String.valueOf(claims.get("email"));
+        return  email;
+    }
     //    validate jwt token
     public boolean validateToken(String token) {
         try{

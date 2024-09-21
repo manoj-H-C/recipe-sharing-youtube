@@ -49,9 +49,9 @@ public class AppConfig {
         http.csrf((csrf)->csrf.disable())
                 .authorizeHttpRequests((authorize)->
 //                        authorize.anyRequest().authenticated()
-                                authorize.requestMatchers(HttpMethod.GET,"/api/v1/**").permitAll()
+                                authorize.requestMatchers("/api/users/profile/**").permitAll()
                                         .requestMatchers("/auth/**").permitAll()
-//                                        .requestMatchers("/auth/**").permitAll()
+                                        .requestMatchers("/api/recipes/**").permitAll()
                                         .requestMatchers("/v3/api-docs/**").permitAll()
                                         .anyRequest().authenticated()
                 ).exceptionHandling( exception -> exception
