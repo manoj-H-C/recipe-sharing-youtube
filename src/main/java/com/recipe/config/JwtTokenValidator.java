@@ -1,5 +1,6 @@
 package com.recipe.config;
 
+import com.recipe.service.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -11,31 +12,66 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
-
+@Component
 public class JwtTokenValidator extends OncePerRequestFilter {
 
+    private JwtProvider jwtTokenProvider;
+
+    private CustomUserDetailsService userDetailsService;
+
+    public JwtTokenValidator(JwtProvider jwtTokenProvider, CustomUserDetailsService userDetailsService) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = request.getHeader(JwtConstant.JWT_HEADER);
-        if(jwt!=null){
-            jwt=jwt.substring(7);
-            try{
-                SecretKey key= Keys.hmacShaKeyFor(JwtConstant.JWT_SECRET.getBytes());
-                Claims claims= Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
-                String email= String.valueOf(claims.get("email"));
-                Authentication authentication=new UsernamePasswordAuthenticationToken(email,null,null);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }catch (Exception e){
-                e.printStackTrace();
-                throw new BadCredentialsException("invalid token....!");
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+//        get jwt token from http request
+        String token = getTokenFromRequest(request);
 
-            }
+//        validate token
+        if(StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)){
+//            get username from token
+            String username = jwtTokenProvider.getUsername(token);
+//load the user associated with token
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+            );
+
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+
         }
-        filterChain.doFilter(request,response);
+
+        filterChain.doFilter(request, response);
+
+    }
+
+    private String getTokenFromRequest(HttpServletRequest request){
+        String bearerToken = request.getHeader("Authorization");
+
+        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")){
+            return bearerToken.substring(7,bearerToken.length());
+        }
+        return null;
     }
 }
+
+
+
