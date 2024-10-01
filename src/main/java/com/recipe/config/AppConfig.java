@@ -18,7 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
@@ -43,15 +45,28 @@ public class AppConfig {
         return configuration.getAuthenticationManager();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); // Update to your frontend URL
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     //    basic authentication
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf((csrf)->csrf.disable())
                 .authorizeHttpRequests((authorize)->
 //                        authorize.anyRequest().authenticated()
-                                authorize.requestMatchers("/api/users/profile/**").permitAll()
-                                        .requestMatchers("/auth/**").permitAll()
+                                authorize.requestMatchers("/api/users/profile").permitAll()
+                                        .requestMatchers(HttpMethod.POST,"/auth/**").permitAll()
                                         .requestMatchers("/api/recipes/**").permitAll()
+                                        .requestMatchers("/api/recipes").permitAll()
                                         .requestMatchers("/v3/api-docs/**").permitAll()
                                         .anyRequest().authenticated()
                 ).exceptionHandling( exception -> exception

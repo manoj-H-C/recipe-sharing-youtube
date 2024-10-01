@@ -5,12 +5,15 @@ import com.recipe.model.User;
 import com.recipe.service.RecipeService;
 import com.recipe.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/recipes/")
+@RequestMapping("/api/recipes")
 public class RecipeController {
 
     private final RecipeService recipeService;
@@ -34,10 +37,18 @@ public class RecipeController {
         return recipes;
     }
 
+//    @DeleteMapping("/{recipeId}")
+////    public String deleteRecipe(@PathVariable Long recipeId) throws Exception{
+////        recipeService.deleteRecipe(recipeId);
+////        return "recipe deleted successfully";
+////    }
+
     @DeleteMapping("/{recipeId}")
-    public String deleteRecipe(@PathVariable Long recipeId) throws Exception{
+    public ResponseEntity<Map<String, String>> deleteRecipe(@PathVariable Long recipeId) throws Exception {
         recipeService.deleteRecipe(recipeId);
-        return "recipe deleted successfully";
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "recipe deleted successfully");
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
